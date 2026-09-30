@@ -1,0 +1,169 @@
+###
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bravo",
+  "email": "bravo@example.com",
+  "password": "Test1234!"
+}
+###
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bravo@example.com",
+  "password": "Test1234!"
+}
+###
+GET http://localhost:5000/api/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+
+###
+POST http://localhost:5000/api/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "description": "Office laptop",
+  "price": 55000,
+  "stock_quantity": 5
+}
+###
+GET http://localhost:5000/api/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+PUT http://localhost:5000/api/products/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "description": "Office laptop - updated",
+  "price": 60000,
+  "stock_quantity": 8
+}
+###
+GET http://localhost:5000/api/products/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+DELETE http://localhost:5000/api/products/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+GET http://localhost:5000/api/products/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+
+POST http://localhost:5000/api/sales
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+Content-Type: application/json
+
+{
+  "product_id": 2,
+  "quantity": 2
+}
+###
+GET http://localhost:5000/api/sales
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+GET http://localhost:5000/api/customers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+POST http://localhost:5000/api/customers
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+
+{
+  "name": "John Doe",
+  "phone": "0712345678",
+  "email": "john@example.com"
+}
+###
+GET http://localhost:5000/api/customers/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+GET http://localhost:5000/api/customers/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+###
+PUT http://localhost:5000/api/customers/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+
+{
+  "name": "John Doe Updated",
+  "phone": "0798765432",
+  "email": "john.updated@example.com"
+}
+###
+DELETE http://localhost:5000/api/customers/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+### Create Sale
+POST http://localhost:5000/api/sales
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA
+Content-Type: application/json
+
+{
+  "product_id": 1,
+  "quantity": 1,
+  "customer_id": 4
+}
+###
+fetch("http://localhost:5000/api/users", {
+  method: "GET",
+  headers: {
+    "Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b0BleGFtcGxlLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc2MjY5OSwiZXhwIjoxNzkwODQ5MDk5fQ.perMN5cRKNyf2jtT5qzxP64wFpZgU0dRm6wNX9a6MtA"
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error(error))
+
+  ###
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bravo@example.com",
+  "password": "Test1234!"
+}
+###
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bravobroke465@gmail.com",
+  "password": "Lastychogo1234!"
+}
+###
+GET http://localhost:5000/api/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJicmF2b2Jyb2tlNDY1QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc5MDc4MjA0MiwiZXhwIjoxNzkwODY4NDQyfQ.LKatLu_BYU-jQ-KLYI8UJfz4FK_QSNtQs3lUkweIR9o
+###
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Staff User",
+  "email": "staff@bizmanager.com",
+  "password": "Staff1234!"
+}
+###
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "staff@bizmanager.com",
+  "password": "Staff1234!"
+}
+###
+GET http://localhost:5000/api/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJzdGFmZkBiaXptYW5hZ2VyLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc4MjgzMCwiZXhwIjoxNzkwODY5MjMwfQ.7HWxIaHyEOGMb9ipAPG7Ht0L71lIH1qf4vj_JPWXUzQ
+###
+POST http://localhost:5000/api/invoices/sale/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJzdGFmZkBiaXptYW5hZ2VyLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc4MjgzMCwiZXhwIjoxNzkwODY5MjMwfQ.7HWxIaHyEOGMb9ipAPG7Ht0L71lIH1qf4vj_JPWXUzQ
+###
+GET http://localhost:5000/api/sales
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJzdGFmZkBiaXptYW5hZ2VyLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc4MjgzMCwiZXhwIjoxNzkwODY5MjMwfQ.7HWxIaHyEOGMb9ipAPG7Ht0L71lIH1qf4vj_JPWXUzQ
+###
+POST http://localhost:5000/api/invoices/sale/5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJzdGFmZkBiaXptYW5hZ2VyLmNvbSIsInJvbGUiOiJzdGFmZiIsImlhdCI6MTc5MDc4MjgzMCwiZXhwIjoxNzkwODY5MjMwfQ.7HWxIaHyEOGMb9ipAPG7Ht0L71lIH1qf4vj_JPWXUzQ
