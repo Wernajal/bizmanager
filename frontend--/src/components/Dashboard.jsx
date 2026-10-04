@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+
 import Customers from "./Customers";
 import Products from "./Products";
 import Sales from "./Sales";
+import Expenses from "./Expenses";
 import Reports from "./Reports";
 import Settings from "./Settings";
 import Users from "./Users";
+import ActivityLog from "./ActivityLog";
 
 function Dashboard({ user, onLogout }) {
   const [productCount, setProductCount] = useState(0);
@@ -16,12 +19,26 @@ function Dashboard({ user, onLogout }) {
 
   const [activePage, setActivePage] = useState("overview");
 
+  // =================================================
+  // ROLE
+  // =================================================
+
+  const isAdmin =
+    String(user?.role || "").toLowerCase() === "admin";
+
+  // =================================================
+  // FETCH DASHBOARD DATA
+  // =================================================
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        // Products
+        // =================================================
+        // PRODUCTS
+        // =================================================
+
         const productsResponse = await fetch(
           "http://localhost:5000/api/products",
           {
@@ -40,18 +57,18 @@ function Dashboard({ user, onLogout }) {
 
           setProductCount(products.length);
 
-          const lowStock =
-            products.filter(
-              (product) =>
-                Number(product.stock_quantity) <= 5
-            );
-
-          setLowStockCount(
-            lowStock.length
+          const lowStock = products.filter(
+            (product) =>
+              Number(product.stock_quantity) <= 5
           );
+
+          setLowStockCount(lowStock.length);
         }
 
-        // Sales
+        // =================================================
+        // SALES
+        // =================================================
+
         const salesResponse = await fetch(
           "http://localhost:5000/api/sales",
           {
@@ -68,29 +85,32 @@ function Dashboard({ user, onLogout }) {
           const sales =
             salesData.sales || [];
 
-          const revenue =
-            sales.reduce(
-              (total, sale) =>
-                total +
-                Number(sale.total_amount),
-              0
-            );
+          const revenue = sales.reduce(
+            (total, sale) =>
+              total +
+              Number(sale.total_amount || 0),
+            0
+          );
 
           setTotalSales(revenue);
+
           setOrderCount(sales.length);
 
-          setRecentSales(
-            [...sales]
-              .sort(
-                (a, b) =>
-                  new Date(b.created_at) -
-                  new Date(a.created_at)
-              )
-              .slice(0, 5)
-          );
+          const sortedSales = [...sales]
+            .sort(
+              (a, b) =>
+                new Date(b.created_at) -
+                new Date(a.created_at)
+            )
+            .slice(0, 5);
+
+          setRecentSales(sortedSales);
         }
 
-        // Customers
+        // =================================================
+        // CUSTOMERS
+        // =================================================
+
         const customersResponse =
           await fetch(
             "http://localhost:5000/api/customers",
@@ -123,11 +143,121 @@ function Dashboard({ user, onLogout }) {
     fetchDashboardData();
   }, []);
 
+  // =================================================
+  // PAGE TITLE
+  // =================================================
+
+  const getPageTitle = () => {
+    switch (activePage) {
+      case "overview":
+        return "Dashboard";
+
+      case "products":
+        return "Products";
+
+      case "sales":
+        return "Sales";
+
+      case "expenses":
+        return "Expenses";
+
+      case "customers":
+        return "Customers";
+
+      case "reports":
+        return "Reports";
+
+      case "users":
+        return "Users";
+
+      case "settings":
+        return "Settings";
+
+      case "activity":
+        return "Activity Log";
+
+      default:
+        return "Dashboard";
+    }
+  };
+
+  // =================================================
+  // PAGE DESCRIPTION
+  // =================================================
+
+  const getPageDescription = () => {
+    switch (activePage) {
+      case "overview":
+        return "Manage your business with ease.";
+
+      case "products":
+        return "Manage your products and inventory.";
+
+      case "sales":
+        return "Manage your business sales.";
+
+      case "expenses":
+        return "Track and manage your business expenses.";
+
+      case "customers":
+        return "Manage your customers.";
+
+      case "reports":
+        return "View business performance and reports.";
+
+      case "users":
+        return "Manage system users and access.";
+
+      case "settings":
+        return "Manage your account and application settings.";
+
+      case "activity":
+        return "Monitor important actions performed in BizManager.";
+
+      default:
+        return "Manage your business with ease.";
+    }
+  };
+
+  // =================================================
+  // NAVIGATION BUTTON
+  // =================================================
+
+  const renderNavButton = (
+    page,
+    icon,
+    label
+  ) => {
+    return (
+      <button
+        type="button"
+        className={
+          activePage === page
+            ? "sidebar-link active"
+            : "sidebar-link"
+        }
+        onClick={() => setActivePage(page)}
+      >
+        <span>{icon}</span>
+        {label}
+      </button>
+    );
+  };
+
+  // =================================================
+  // DASHBOARD
+  // =================================================
+
   return (
     <div className="app-layout">
 
-      {/* Sidebar */}
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
+
       <aside className="sidebar">
+
+        {/* LOGO */}
 
         <div className="sidebar-logo">
 
@@ -136,7 +266,10 @@ function Dashboard({ user, onLogout }) {
           </div>
 
           <div>
-            <h2>BizManager</h2>
+            <h2>
+              BizManager
+            </h2>
+
             <span>
               Business Suite
             </span>
@@ -144,119 +277,81 @@ function Dashboard({ user, onLogout }) {
 
         </div>
 
+        {/* NAVIGATION */}
+
         <nav className="sidebar-nav">
 
-          <button
-            className={
-              activePage === "overview"
-                ? "sidebar-link active"
-                : "sidebar-link"
-            }
-            onClick={() =>
-              setActivePage("overview")
-            }
-          >
-            <span>📊</span>
-            Overview
-          </button>
-
-          <button
-            className={
-              activePage === "products"
-                ? "sidebar-link active"
-                : "sidebar-link"
-            }
-            onClick={() =>
-              setActivePage("products")
-            }
-          >
-            <span>📦</span>
-            Products
-          </button>
-
-          <button
-            className={
-              activePage === "sales"
-                ? "sidebar-link active"
-                : "sidebar-link"
-            }
-            onClick={() =>
-              setActivePage("sales")
-            }
-          >
-            <span>💰</span>
-            Sales
-          </button>
-
-          <button
-            className={
-              activePage === "customers"
-                ? "sidebar-link active"
-                : "sidebar-link"
-            }
-            onClick={() =>
-              setActivePage("customers")
-            }
-          >
-            <span>👥</span>
-            Customers
-          </button>
-
-          {/* Reports */}
-          <button
-            className={
-              activePage === "reports"
-                ? "sidebar-link active"
-                : "sidebar-link"
-            }
-            onClick={() =>
-              setActivePage("reports")
-            }
-          >
-            <span>📈</span>
-            Reports
-          </button>
-
-          {/* Users - Admin Only */}
-          {user.role === "admin" && (
-            <button
-              className={
-                activePage === "users"
-                  ? "sidebar-link active"
-                  : "sidebar-link"
-              }
-              onClick={() =>
-                setActivePage("users")
-              }
-            >
-              <span>👤</span>
-              Users
-            </button>
+          {renderNavButton(
+            "overview",
+            "📊",
+            "Overview"
           )}
 
-          {/* Settings */}
-          <button
-            className={
-              activePage === "settings"
-                ? "sidebar-link active"
-                : "sidebar-link"
-            }
-            onClick={() =>
-              setActivePage("settings")
-            }
-          >
-            <span>⚙️</span>
-            Settings
-          </button>
+          {renderNavButton(
+            "products",
+            "📦",
+            "Products"
+          )}
+
+          {renderNavButton(
+            "sales",
+            "💰",
+            "Sales"
+          )}
+
+          {renderNavButton(
+            "expenses",
+            "💸",
+            "Expenses"
+          )}
+
+          {renderNavButton(
+            "customers",
+            "👥",
+            "Customers"
+          )}
+
+          {renderNavButton(
+            "reports",
+            "📈",
+            "Reports"
+          )}
+
+          {/* ADMIN ONLY */}
+
+          {isAdmin &&
+            renderNavButton(
+              "users",
+              "👤",
+              "Users"
+            )}
+
+          {isAdmin &&
+            renderNavButton(
+              "activity",
+              "🕵️",
+              "Activity Log"
+            )}
+
+          {isAdmin &&
+            renderNavButton(
+              "settings",
+              "⚙️",
+              "Settings"
+            )}
 
         </nav>
+
+        {/* =================================================
+            SIDEBAR BOTTOM
+        ================================================= */}
 
         <div className="sidebar-bottom">
 
           <div className="user-mini">
 
             <div className="avatar">
-              {user.email
+              {user?.email
                 ? user.email
                     .charAt(0)
                     .toUpperCase()
@@ -264,18 +359,21 @@ function Dashboard({ user, onLogout }) {
             </div>
 
             <div>
+
               <strong>
-                {user.email}
+                {user?.email || "User"}
               </strong>
 
               <span>
-                {user.role}
+                {user?.role || "Staff"}
               </span>
+
             </div>
 
           </div>
 
           <button
+            type="button"
             className="logout-btn"
             onClick={onLogout}
           >
@@ -286,41 +384,24 @@ function Dashboard({ user, onLogout }) {
 
       </aside>
 
-      {/* Main Area */}
+      {/* =================================================
+          MAIN AREA
+      ================================================= */}
+
       <div className="main-area">
 
-        {/* Top Bar */}
+        {/* TOP BAR */}
+
         <header className="topbar">
 
           <div>
 
             <h1>
-
-              {activePage === "overview" &&
-                "Dashboard"}
-
-              {activePage === "products" &&
-                "Products"}
-
-              {activePage === "sales" &&
-                "Sales"}
-
-              {activePage === "customers" &&
-                "Customers"}
-
-              {activePage === "reports" &&
-                "Reports"}
-
-              {activePage === "users" &&
-                "Users"}
-
-              {activePage === "settings" &&
-                "Settings"}
-
+              {getPageTitle()}
             </h1>
 
             <p>
-              Manage your business with ease.
+              {getPageDescription()}
             </p>
 
           </div>
@@ -328,25 +409,33 @@ function Dashboard({ user, onLogout }) {
           <div className="topbar-user">
 
             <span>
-              {user.email}
+              {user?.email || "User"}
             </span>
 
             <div className="avatar">
-              {user.email
+
+              {user?.email
                 ? user.email
                     .charAt(0)
                     .toUpperCase()
                 : "U"}
+
             </div>
 
           </div>
 
         </header>
 
-        {/* Main Content */}
+        {/* =================================================
+            MAIN CONTENT
+        ================================================= */}
+
         <main className="main-content">
 
-          {/* Overview */}
+          {/* =================================================
+              OVERVIEW
+          ================================================= */}
+
           {activePage === "overview" && (
             <>
 
@@ -363,6 +452,8 @@ function Dashboard({ user, onLogout }) {
 
               </div>
 
+              {/* MAIN STATISTICS */}
+
               <div className="stats-grid">
 
                 <div className="stat-card">
@@ -372,6 +463,7 @@ function Dashboard({ user, onLogout }) {
                   </span>
 
                   <div>
+
                     <p>
                       Total Products
                     </p>
@@ -379,6 +471,7 @@ function Dashboard({ user, onLogout }) {
                     <h2>
                       {productCount}
                     </h2>
+
                   </div>
 
                 </div>
@@ -390,6 +483,7 @@ function Dashboard({ user, onLogout }) {
                   </span>
 
                   <div>
+
                     <p>
                       Total Revenue
                     </p>
@@ -398,6 +492,7 @@ function Dashboard({ user, onLogout }) {
                       KSh{" "}
                       {totalSales.toLocaleString()}
                     </h2>
+
                   </div>
 
                 </div>
@@ -409,6 +504,7 @@ function Dashboard({ user, onLogout }) {
                   </span>
 
                   <div>
+
                     <p>
                       Total Orders
                     </p>
@@ -416,6 +512,7 @@ function Dashboard({ user, onLogout }) {
                     <h2>
                       {orderCount}
                     </h2>
+
                   </div>
 
                 </div>
@@ -427,6 +524,7 @@ function Dashboard({ user, onLogout }) {
                   </span>
 
                   <div>
+
                     <p>
                       Customers
                     </p>
@@ -434,11 +532,14 @@ function Dashboard({ user, onLogout }) {
                     <h2>
                       {customerCount}
                     </h2>
+
                   </div>
 
                 </div>
 
               </div>
+
+              {/* SECONDARY STATISTICS */}
 
               <div className="stats-grid">
 
@@ -449,6 +550,7 @@ function Dashboard({ user, onLogout }) {
                   </span>
 
                   <div>
+
                     <p>
                       Low Stock Products
                     </p>
@@ -456,6 +558,7 @@ function Dashboard({ user, onLogout }) {
                     <h2>
                       {lowStockCount}
                     </h2>
+
                   </div>
 
                 </div>
@@ -467,6 +570,7 @@ function Dashboard({ user, onLogout }) {
                   </span>
 
                   <div>
+
                     <p>
                       Average Order
                     </p>
@@ -480,19 +584,21 @@ function Dashboard({ user, onLogout }) {
                           ).toLocaleString()
                         : "0"}
                     </h2>
+
                   </div>
 
                 </div>
 
               </div>
 
-              {/* Recent Sales */}
+              {/* RECENT SALES */}
 
               <div className="dashboard-section">
 
                 <div className="section-header">
 
                   <div>
+
                     <h2>
                       Recent Sales
                     </h2>
@@ -501,9 +607,11 @@ function Dashboard({ user, onLogout }) {
                       Your latest business
                       transactions.
                     </p>
+
                   </div>
 
                   <button
+                    type="button"
                     className="add-product-btn"
                     onClick={() =>
                       setActivePage("sales")
@@ -514,8 +622,8 @@ function Dashboard({ user, onLogout }) {
 
                 </div>
 
-                {recentSales.length ===
-                0 ? (
+                {recentSales.length === 0 ? (
+
                   <div className="empty-products">
 
                     <h3>
@@ -528,36 +636,42 @@ function Dashboard({ user, onLogout }) {
                     </p>
 
                   </div>
+
                 ) : (
+
                   <div className="sales-table-container">
 
                     <table className="sales-table">
 
                       <thead>
+
                         <tr>
-                          <th>ID</th>
+
+                          <th>
+                            ID
+                          </th>
+
                           <th>
                             Customer
                           </th>
-                          <th>
-                            Product
-                          </th>
-                          <th>
-                            Quantity
-                          </th>
+
                           <th>
                             Total
                           </th>
+
                           <th>
                             Date
                           </th>
+
                         </tr>
+
                       </thead>
 
                       <tbody>
 
                         {recentSales.map(
                           (sale) => (
+
                             <tr
                               key={sale.id}
                             >
@@ -567,37 +681,33 @@ function Dashboard({ user, onLogout }) {
                               </td>
 
                               <td>
-                                {
-                                  sale.customer_name
-                                }
+                                {sale.customer_name ||
+                                  "Walk-in Customer"}
                               </td>
 
                               <td>
-                                {
-                                  sale.product_name
-                                }
-                              </td>
 
-                              <td>
-                                {sale.quantity}
-                              </td>
-
-                              <td>
                                 <strong>
                                   KSh{" "}
+
                                   {Number(
-                                    sale.total_amount
+                                    sale.total_amount ||
+                                      0
                                   ).toLocaleString()}
                                 </strong>
+
                               </td>
 
                               <td>
+
                                 {new Date(
                                   sale.created_at
                                 ).toLocaleString()}
+
                               </td>
 
                             </tr>
+
                           )
                         )}
 
@@ -606,6 +716,7 @@ function Dashboard({ user, onLogout }) {
                     </table>
 
                   </div>
+
                 )}
 
               </div>
@@ -613,36 +724,55 @@ function Dashboard({ user, onLogout }) {
             </>
           )}
 
-          {/* Products */}
+          {/* PRODUCTS */}
+
           {activePage === "products" && (
             <Products />
           )}
 
-          {/* Sales */}
+          {/* SALES */}
+
           {activePage === "sales" && (
             <Sales />
           )}
 
-          {/* Customers */}
+          {/* EXPENSES */}
+
+          {activePage === "expenses" && (
+            <Expenses />
+          )}
+
+          {/* CUSTOMERS */}
+
           {activePage === "customers" && (
             <Customers />
           )}
 
-          {/* Reports */}
+          {/* REPORTS */}
+
           {activePage === "reports" && (
             <Reports />
           )}
 
-          {/* Users */}
-          {activePage === "users" &&
-            user.role === "admin" && (
-              <Users />
+          {/* USERS — ADMIN ONLY */}
+
+          {activePage === "users" && isAdmin && (
+            <Users />
+          )}
+
+          {/* ACTIVITY LOG — ADMIN ONLY */}
+
+          {activePage === "activity" &&
+            isAdmin && (
+              <ActivityLog />
             )}
 
-          {/* Settings */}
-          {activePage === "settings" && (
-            <Settings />
-          )}
+          {/* SETTINGS — ADMIN ONLY */}
+
+          {activePage === "settings" &&
+            isAdmin && (
+              <Settings />
+            )}
 
         </main>
 

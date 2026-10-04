@@ -1,35 +1,37 @@
 const express = require("express");
 const db = require("../config/db");
 const authMiddleware = require("../middleware/auth");
+const logAction = require("../utils/auditLog");
 
 const router = express.Router();
 
-// Generate invoice for a sale
+// =====================================================
+// CREATE INVOICE FOR SALE
+// =====================================================
+
 router.post(
   "/sale/:saleId",
   authMiddleware,
   async (req, res) => {
     try {
-      const { saleId } = req.params;
+      const saleId = Number(req.params.saleId);
 
-      // Check if sale exists
+      if (!saleId) {
+        return res.status(400).json({
+          message: "Invalid sale ID",
+        });
+      }
+
+      // -----------------------------------------------
+      // CHECK SALE EXISTS
+      // -----------------------------------------------
+
       const saleResult = await db.query(
         `SELECT
-          sales.id,
-          sales.product_id,
-          products.name AS product_name,
-          sales.customer_id,
-          customers.name AS customer_name,
-          customers.phone AS customer_phone,
-          customers.email AS customer_email,
-          sales.quantity,
-          sales.unit_price,
-          sales.total_amount,
-          sales.sold_by,
-          sales.created_at
+           sales.id,
+           sales.total_amount,
+           customers.name AS customer_name
          FROM sales
-         JOIN products
-           ON products.id = sales.product_id
          JOIN customers
            ON customers.id = sales.customer_id
          WHERE sales.id = $1`,
@@ -38,13 +40,16 @@ router.post(
 
       if (saleResult.rows.length === 0) {
         return res.status(404).json({
-          message: "Sale not found"
+          message: "Sale not found",
         });
       }
 
       const sale = saleResult.rows[0];
 
-      // Check if invoice already exists
+      // -----------------------------------------------
+      // CHECK IF INVOICE ALREADY EXISTS
+      // -----------------------------------------------
+
       const existingInvoice =
         await db.query(
           `SELECT *
@@ -54,107 +59,224 @@ router.post(
         );
 
       if (existingInvoice.rows.length > 0) {
-        return res.json({
+        return res.status(409).json({
           message: "Invoice already exists",
-          invoice: existingInvoice.rows[0]
+          invoice:
+            existingInvoice.rows[0],
         });
       }
 
-      // Generate invoice number
-      const invoiceNumber =
-        `INV-${Date.now()}-${sale.id}`;
+      // -----------------------------------------------
+      // GENERATE INVOICE NUMBER
+      // -----------------------------------------------
 
-      // Create invoice
+      const invoiceNumber =
+        `INV-${Date.now()}-${saleId}`;
+
+      // -----------------------------------------------
+      // CREATE INVOICE
+      // -----------------------------------------------
+
       const invoiceResult =
         await db.query(
           `INSERT INTO invoices
-           (invoice_number, sale_id)
-           VALUES ($1, $2)
+           (
+             invoice_number,
+             sale_id
+           )
+           VALUES
+           ($1, $2)
            RETURNING *`,
           [
             invoiceNumber,
-            sale.id
+            saleId,
           ]
         );
 
-      res.status(201).json({
-        message: "Invoice created successfully",
-        invoice: {
-          ...invoiceResult.rows[0],
-          sale
-        }
+      const invoice =
+        invoiceResult.rows[0];
+
+      // -----------------------------------------------
+      // AUDIT LOG
+      // -----------------------------------------------
+
+      await logAction({
+        userId: req.user.id,
+        action: "CREATE",
+        entity: "INVOICE",
+        entityId: invoice.id,
+        description:
+          `Created invoice ${invoice.invoice_number} ` +
+          `for sale #${saleId} ` +
+          `for ${sale.customer_name}. ` +
+          `Total: KSh ${Number(
+            sale.total_amount || 0
+          ).toLocaleString("en-KE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
       });
 
+      console.log(
+        `AUDIT: Invoice ${invoice.invoice_number} created by user ${req.user.id}`
+      );
+
+      // -----------------------------------------------
+      // RESPONSE
+      // -----------------------------------------------
+
+      res.status(201).json({
+        message:
+          "Invoice created successfully",
+        invoice,
+      });
     } catch (error) {
-      console.error(error);
+      console.error(
+        "CREATE INVOICE ERROR:",
+        error
+      );
 
       res.status(500).json({
-        message: "Server error"
+        message: "Server error",
       });
     }
   }
 );
 
-// Get invoice by sale ID
+// =====================================================
+// GET INVOICE FOR SALE
+// =====================================================
+
 router.get(
   "/sale/:saleId",
   authMiddleware,
   async (req, res) => {
     try {
-      const { saleId } = req.params;
+      const saleId =
+        Number(req.params.saleId);
 
-      const result = await db.query(
-        `SELECT
-          invoices.id,
-          invoices.invoice_number,
-          invoices.sale_id,
-          invoices.created_at,
-
-          sales.product_id,
-          products.name AS product_name,
-
-          sales.customer_id,
-          customers.name AS customer_name,
-          customers.phone AS customer_phone,
-          customers.email AS customer_email,
-
-          sales.quantity,
-          sales.unit_price,
-          sales.total_amount,
-
-          sales.sold_by,
-          sales.created_at AS sale_date
-
-         FROM invoices
-
-         JOIN sales
-           ON sales.id = invoices.sale_id
-
-         JOIN products
-           ON products.id = sales.product_id
-
-         JOIN customers
-           ON customers.id = sales.customer_id
-
-         WHERE invoices.sale_id = $1`,
-        [saleId]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({
-          message: "Invoice not found"
+      if (!saleId) {
+        return res.status(400).json({
+          message: "Invalid sale ID",
         });
       }
 
-      res.json({
-        invoice: result.rows[0]
-      });
+      // -----------------------------------------------
+      // GET INVOICE + SALE + CUSTOMER
+      // -----------------------------------------------
 
+      const invoiceResult =
+        await db.query(
+          `SELECT
+             invoices.id,
+             invoices.invoice_number,
+             invoices.sale_id,
+             invoices.created_at,
+
+             sales.customer_id,
+             sales.total_amount,
+             sales.created_at AS sale_created_at,
+
+             customers.name AS customer_name,
+             customers.phone AS customer_phone,
+             customers.email AS customer_email
+
+           FROM invoices
+
+           JOIN sales
+             ON sales.id =
+                invoices.sale_id
+
+           JOIN customers
+             ON customers.id =
+                sales.customer_id
+
+           WHERE invoices.sale_id = $1`,
+          [saleId]
+        );
+
+      if (
+        invoiceResult.rows.length === 0
+      ) {
+        return res.status(404).json({
+          message: "Invoice not found",
+        });
+      }
+
+      const invoice =
+        invoiceResult.rows[0];
+
+      // -----------------------------------------------
+      // GET ALL SALE ITEMS
+      // -----------------------------------------------
+
+      const itemsResult =
+        await db.query(
+          `SELECT
+             sale_items.id,
+             sale_items.product_id,
+
+             products.name AS product_name,
+             products.description,
+
+             sale_items.quantity,
+             sale_items.unit_price,
+             sale_items.total_amount
+
+           FROM sale_items
+
+           JOIN products
+             ON products.id =
+                sale_items.product_id
+
+           WHERE sale_items.sale_id = $1
+
+           ORDER BY sale_items.id ASC`,
+          [saleId]
+        );
+
+      // -----------------------------------------------
+      // CALCULATE SUBTOTAL
+      // -----------------------------------------------
+
+      const subtotal =
+        itemsResult.rows.reduce(
+          (sum, item) =>
+            sum +
+            Number(
+              item.total_amount || 0
+            ),
+          0
+        );
+
+      // -----------------------------------------------
+      // RETURN COMPLETE INVOICE
+      // -----------------------------------------------
+
+      res.json({
+        invoice: {
+          ...invoice,
+
+          subtotal,
+
+          discount: 0,
+
+          tax: 0,
+
+          grand_total: subtotal,
+
+          items:
+            itemsResult.rows,
+        },
+      });
     } catch (error) {
-      console.error(error);
+      console.error(
+        "GET INVOICE ERROR:",
+        error
+      );
 
       res.status(500).json({
-        message: "Server error"
+        message: "Server error",
       });
     }
   }

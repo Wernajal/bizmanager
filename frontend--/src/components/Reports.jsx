@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
 
 function Reports() {
+  const [report, setReport] = useState({
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    profitMargin: 0,
+    totalOrders: 0,
+    totalExpenseRecords: 0,
+  });
+
+  const [expenseBreakdown, setExpenseBreakdown] =
+    useState([]);
+
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -13,15 +25,33 @@ function Reports() {
       try {
         const token = localStorage.getItem("token");
 
+        if (!token) {
+          throw new Error(
+            "No authentication token found. Please login again."
+          );
+        }
+
         const headers = {
           Authorization: `Bearer ${token}`,
         };
 
         const [
+          summaryResponse,
+          expenseResponse,
           salesResponse,
           productsResponse,
           customersResponse,
         ] = await Promise.all([
+          fetch(
+            "http://localhost:5000/api/reports/summary",
+            { headers }
+          ),
+
+          fetch(
+            "http://localhost:5000/api/reports/expenses-by-category",
+            { headers }
+          ),
+
           fetch(
             "http://localhost:5000/api/sales",
             { headers }
@@ -38,6 +68,12 @@ function Reports() {
           ),
         ]);
 
+        const summaryData =
+          await summaryResponse.json();
+
+        const expenseData =
+          await expenseResponse.json();
+
         const salesData =
           await salesResponse.json();
 
@@ -46,6 +82,24 @@ function Reports() {
 
         const customersData =
           await customersResponse.json();
+
+        // =====================================
+        // CHECK RESPONSES
+        // =====================================
+
+        if (!summaryResponse.ok) {
+          throw new Error(
+            summaryData.message ||
+              "Failed to fetch report summary"
+          );
+        }
+
+        if (!expenseResponse.ok) {
+          throw new Error(
+            expenseData.message ||
+              "Failed to fetch expense report"
+          );
+        }
 
         if (!salesResponse.ok) {
           throw new Error(
@@ -68,17 +122,45 @@ function Reports() {
           );
         }
 
-        setSales(salesData.sales || []);
+        // =====================================
+        // SET DATA
+        // =====================================
+
+        setReport(
+          summaryData.report || {
+            totalRevenue: 0,
+            totalExpenses: 0,
+            netProfit: 0,
+            profitMargin: 0,
+            totalOrders: 0,
+            totalExpenseRecords: 0,
+          }
+        );
+
+        setExpenseBreakdown(
+          expenseData.breakdown || []
+        );
+
+        setSales(
+          salesData.sales || []
+        );
+
         setProducts(
           productsData.products || []
         );
+
         setCustomers(
           customersData.customers || []
         );
 
       } catch (error) {
-        console.error(error);
+        console.error(
+          "Failed to fetch reports:",
+          error
+        );
+
         setError(error.message);
+
       } finally {
         setLoading(false);
       }
@@ -87,28 +169,37 @@ function Reports() {
     fetchReportData();
   }, []);
 
+  // =====================================
+  // LOADING
+  // =====================================
+
   if (loading) {
-    return <p>Loading reports...</p>;
+    return (
+      <div className="reports-section">
+        <p>Loading reports...</p>
+      </div>
+    );
   }
 
-  const totalRevenue = sales.reduce(
-    (total, sale) =>
-      total + Number(sale.total_amount),
-    0
-  );
-
-  const totalOrders = sales.length;
+  // =====================================
+  // SALES CALCULATIONS
+  // =====================================
 
   const totalItemsSold = sales.reduce(
     (total, sale) =>
-      total + Number(sale.quantity),
+      total + Number(sale.quantity || 0),
     0
   );
 
   const averageOrder =
-    totalOrders > 0
-      ? totalRevenue / totalOrders
+    report.totalOrders > 0
+      ? report.totalRevenue /
+        report.totalOrders
       : 0;
+
+  // =====================================
+  // LOW STOCK PRODUCTS
+  // =====================================
 
   const lowStockProducts =
     products.filter(
@@ -116,25 +207,31 @@ function Reports() {
         Number(product.stock_quantity) <= 5
     );
 
-  // Calculate best-selling products
+  // =====================================
+  // BEST SELLING PRODUCTS
+  // =====================================
+
   const productSales = {};
 
   sales.forEach((sale) => {
-    const productId = sale.product_id;
+    const productId =
+      sale.product_id;
 
     if (!productSales[productId]) {
       productSales[productId] = {
-        name: sale.product_name,
+        name:
+          sale.product_name ||
+          "Unknown Product",
         quantity: 0,
         revenue: 0,
       };
     }
 
     productSales[productId].quantity +=
-      Number(sale.quantity);
+      Number(sale.quantity || 0);
 
     productSales[productId].revenue +=
-      Number(sale.total_amount);
+      Number(sale.total_amount || 0);
   });
 
   const bestSellingProducts =
@@ -145,12 +242,15 @@ function Reports() {
       )
       .slice(0, 5);
 
-  // Calculate top customers
+  // =====================================
+  // TOP CUSTOMERS
+  // =====================================
+
   const customerSales = {};
 
   sales.forEach((sale) => {
     const customerId =
-      sale.customer_id;
+      sale.customer_id || "unknown";
 
     if (!customerSales[customerId]) {
       customerSales[customerId] = {
@@ -162,10 +262,11 @@ function Reports() {
       };
     }
 
-    customerSales[customerId].orders += 1;
+    customerSales[customerId].orders +=
+      1;
 
     customerSales[customerId].spending +=
-      Number(sale.total_amount);
+      Number(sale.total_amount || 0);
   });
 
   const topCustomers =
@@ -179,18 +280,26 @@ function Reports() {
   return (
     <div className="reports-section">
 
+      {/* =====================================
+          HEADER
+      ===================================== */}
+
       <div className="products-header">
 
         <div>
           <h2>Reports</h2>
 
           <p>
-            Business performance and sales
-            insights.
+            Business performance and
+            financial insights.
           </p>
         </div>
 
       </div>
+
+      {/* =====================================
+          ERROR
+      ===================================== */}
 
       {error && (
         <div className="error-message">
@@ -198,7 +307,9 @@ function Reports() {
         </div>
       )}
 
-      {/* Summary */}
+      {/* =====================================
+          FINANCIAL SUMMARY
+      ===================================== */}
 
       <div className="stats-grid">
 
@@ -213,11 +324,78 @@ function Reports() {
 
             <h2>
               KSh{" "}
-              {totalRevenue.toLocaleString()}
+              {Number(
+                report.totalRevenue
+              ).toLocaleString()}
             </h2>
           </div>
 
         </div>
+
+        <div className="stat-card">
+
+          <span className="stat-icon">
+            💸
+          </span>
+
+          <div>
+            <p>Total Expenses</p>
+
+            <h2>
+              KSh{" "}
+              {Number(
+                report.totalExpenses
+              ).toLocaleString()}
+            </h2>
+          </div>
+
+        </div>
+
+        <div className="stat-card">
+
+          <span className="stat-icon">
+            📈
+          </span>
+
+          <div>
+            <p>Net Profit</p>
+
+            <h2>
+              KSh{" "}
+              {Number(
+                report.netProfit
+              ).toLocaleString()}
+            </h2>
+          </div>
+
+        </div>
+
+        <div className="stat-card">
+
+          <span className="stat-icon">
+            📊
+          </span>
+
+          <div>
+            <p>Profit Margin</p>
+
+            <h2>
+              {Number(
+                report.profitMargin
+              ).toFixed(2)}
+              %
+            </h2>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* =====================================
+          SALES SUMMARY
+      ===================================== */}
+
+      <div className="stats-grid">
 
         <div className="stat-card">
 
@@ -229,7 +407,7 @@ function Reports() {
             <p>Total Orders</p>
 
             <h2>
-              {totalOrders}
+              {report.totalOrders}
             </h2>
           </div>
 
@@ -254,7 +432,23 @@ function Reports() {
         <div className="stat-card">
 
           <span className="stat-icon">
-            📊
+            🧾
+          </span>
+
+          <div>
+            <p>Expense Records</p>
+
+            <h2>
+              {report.totalExpenseRecords}
+            </h2>
+          </div>
+
+        </div>
+
+        <div className="stat-card">
+
+          <span className="stat-icon">
+            💵
           </span>
 
           <div>
@@ -272,7 +466,105 @@ function Reports() {
 
       </div>
 
-      {/* Best Selling Products */}
+      {/* =====================================
+          EXPENSE BREAKDOWN
+      ===================================== */}
+
+      <div className="dashboard-section">
+
+        <div className="section-header">
+
+          <div>
+            <h2>
+              💸 Expenses by Category
+            </h2>
+
+            <p>
+              See where your business
+              expenses are going.
+            </p>
+          </div>
+
+        </div>
+
+        {expenseBreakdown.length ===
+        0 ? (
+          <div className="empty-products">
+
+            <h3>
+              No expenses yet
+            </h3>
+
+            <p>
+              Expense categories will
+              appear here.
+            </p>
+
+          </div>
+        ) : (
+          <div className="sales-table-container">
+
+            <table className="sales-table">
+
+              <thead>
+
+                <tr>
+                  <th>Category</th>
+                  <th>Records</th>
+                  <th>Amount</th>
+                  <th>Percentage</th>
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {expenseBreakdown.map(
+                  (expense, index) => (
+                    <tr
+                      key={index}
+                    >
+
+                      <td>
+                        {expense.category}
+                      </td>
+
+                      <td>
+                        {expense.expenseCount}
+                      </td>
+
+                      <td>
+                        <strong>
+                          KSh{" "}
+                          {Number(
+                            expense.totalAmount
+                          ).toLocaleString()}
+                        </strong>
+                      </td>
+
+                      <td>
+                        {Number(
+                          expense.percentage
+                        ).toFixed(2)}
+                        %
+                      </td>
+
+                    </tr>
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+        )}
+
+      </div>
+
+      {/* =====================================
+          BEST SELLING PRODUCTS
+      ===================================== */}
 
       <div className="dashboard-section">
 
@@ -284,8 +576,8 @@ function Reports() {
             </h2>
 
             <p>
-              Products generating the most
-              sales volume.
+              Products generating the
+              most sales volume.
             </p>
           </div>
 
@@ -300,8 +592,8 @@ function Reports() {
             </h3>
 
             <p>
-              Best-selling products will
-              appear here.
+              Best-selling products
+              will appear here.
             </p>
 
           </div>
@@ -311,19 +603,23 @@ function Reports() {
             <table className="sales-table">
 
               <thead>
+
                 <tr>
                   <th>Rank</th>
                   <th>Product</th>
                   <th>Units Sold</th>
                   <th>Revenue</th>
                 </tr>
+
               </thead>
 
               <tbody>
 
                 {bestSellingProducts.map(
                   (product, index) => (
-                    <tr key={index}>
+                    <tr
+                      key={index}
+                    >
 
                       <td>
                         #{index + 1}
@@ -357,7 +653,9 @@ function Reports() {
 
       </div>
 
-      {/* Top Customers */}
+      {/* =====================================
+          TOP CUSTOMERS
+      ===================================== */}
 
       <div className="dashboard-section">
 
@@ -395,19 +693,23 @@ function Reports() {
             <table className="sales-table">
 
               <thead>
+
                 <tr>
                   <th>Rank</th>
                   <th>Customer</th>
                   <th>Orders</th>
                   <th>Total Spent</th>
                 </tr>
+
               </thead>
 
               <tbody>
 
                 {topCustomers.map(
                   (customer, index) => (
-                    <tr key={index}>
+                    <tr
+                      key={index}
+                    >
 
                       <td>
                         #{index + 1}
@@ -441,7 +743,9 @@ function Reports() {
 
       </div>
 
-      {/* Low Stock */}
+      {/* =====================================
+          LOW STOCK
+      ===================================== */}
 
       <div className="dashboard-section">
 
@@ -480,12 +784,14 @@ function Reports() {
             <table className="sales-table">
 
               <thead>
+
                 <tr>
                   <th>Product</th>
                   <th>Category</th>
                   <th>Stock</th>
                   <th>Price</th>
                 </tr>
+
               </thead>
 
               <tbody>
@@ -507,7 +813,9 @@ function Reports() {
 
                       <td>
                         <strong>
-                          {product.stock_quantity}
+                          {
+                            product.stock_quantity
+                          }
                         </strong>
                       </td>
 
@@ -531,7 +839,9 @@ function Reports() {
 
       </div>
 
-      {/* Customer Count */}
+      {/* =====================================
+          CUSTOMER SUMMARY
+      ===================================== */}
 
       <div className="dashboard-section">
 

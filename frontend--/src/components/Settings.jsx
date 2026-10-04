@@ -1,35 +1,111 @@
 import { useEffect, useState } from "react";
 
 function Settings() {
-  const [user, setUser] = useState(null);
+  // =================================================
+  // SETTINGS
+  // =================================================
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [settings, setSettings] = useState({
+    business_name: "",
+    business_subtitle: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    country: "",
+    tax_number: "",
+    currency: "",
+    invoice_footer: "",
+  });
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  // =================================================
+  // USER / ROLE
+  // =================================================
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  // =================================================
+  // UI STATE
+  // =================================================
 
   const [loading, setLoading] = useState(true);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+  // =================================================
+  // TOKEN
+  // =================================================
+
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
+
+  // =================================================
+  // GET CURRENT USER ROLE FROM JWT
+  // =================================================
+
+  const getUserRole = () => {
+    try {
+      const token = getToken();
+
+      if (!token) {
+        return null;
+      }
+
+      const parts = token.split(".");
+
+      if (parts.length !== 3) {
+        return null;
+      }
+
+      const payload = JSON.parse(
+        atob(
+          parts[1]
+            .replace(/-/g, "+")
+            .replace(/_/g, "/")
+        )
+      );
+
+      return payload.role || null;
+    } catch (error) {
+      console.error(
+        "Failed to read user role:",
+        error
+      );
+
+      return null;
+    }
+  };
+
+  // =================================================
+  // CHECK ADMIN ACCESS
+  // =================================================
 
   useEffect(() => {
-    fetchProfile();
+    const role = getUserRole();
+
+    setIsAdmin(role === "admin");
+    setRoleLoading(false);
   }, []);
 
-  const fetchProfile = async () => {
+  // =================================================
+  // FETCH SETTINGS
+  // ADMIN ONLY
+  // =================================================
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    setError("");
+
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/me",
+        "http://localhost:5000/api/settings",
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${getToken()}`,
           },
         }
       );
@@ -38,89 +114,113 @@ function Settings() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to load profile"
+          data.message ||
+            "Failed to load business settings"
         );
       }
 
-      setUser(data.user);
-      setName(data.user.name);
-      setEmail(data.user.email);
+      if (data.settings) {
+        setSettings({
+          business_name:
+            data.settings.business_name || "",
+
+          business_subtitle:
+            data.settings.business_subtitle || "",
+
+          phone:
+            data.settings.phone || "",
+
+          email:
+            data.settings.email || "",
+
+          address:
+            data.settings.address || "",
+
+          city:
+            data.settings.city || "",
+
+          country:
+            data.settings.country || "",
+
+          tax_number:
+            data.settings.tax_number || "",
+
+          currency:
+            data.settings.currency || "",
+
+          invoice_footer:
+            data.settings.invoice_footer || "",
+        });
+      }
     } catch (error) {
+      console.error(error);
       setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
+  // =================================================
+  // LOAD SETTINGS ONLY FOR ADMIN
+  // =================================================
 
-    setSavingProfile(true);
-    setMessage("");
-    setError("");
-
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/auth/me",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name,
-            email,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to update profile"
-        );
-      }
-
-      setUser(data.user);
-
-      setMessage(
-        "Profile updated successfully."
-      );
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setSavingProfile(false);
+  useEffect(() => {
+    if (!roleLoading && isAdmin) {
+      fetchSettings();
+    } else if (!roleLoading && !isAdmin) {
+      setLoading(false);
     }
+  }, [roleLoading, isAdmin]);
+
+  // =================================================
+  // UPDATE FIELD
+  // =================================================
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setSettings((previousSettings) => ({
+      ...previousSettings,
+      [name]: value,
+    }));
   };
 
-  const handlePasswordChange = async (e) => {
+  // =================================================
+  // SAVE SETTINGS
+  // ADMIN ONLY
+  // =================================================
+
+  const handleSave = async (e) => {
     e.preventDefault();
 
-    setMessage("");
-    setError("");
+    // Extra frontend protection
+    if (!isAdmin) {
+      setError(
+        "Only administrators can change business settings."
+      );
 
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
       return;
     }
 
-    setChangingPassword(true);
+    setSaving(true);
+    setMessage("");
+    setError("");
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/change-password",
+        "http://localhost:5000/api/settings",
         {
           method: "PUT",
+
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${getToken()}`,
           },
-          body: JSON.stringify({
-            currentPassword,
-            newPassword,
-          }),
+
+          body: JSON.stringify(settings),
         }
       );
 
@@ -128,45 +228,143 @@ function Settings() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to change password"
+          data.message ||
+            "Failed to save settings"
         );
       }
 
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      setSettings({
+        business_name:
+          data.settings.business_name || "",
+
+        business_subtitle:
+          data.settings.business_subtitle || "",
+
+        phone:
+          data.settings.phone || "",
+
+        email:
+          data.settings.email || "",
+
+        address:
+          data.settings.address || "",
+
+        city:
+          data.settings.city || "",
+
+        country:
+          data.settings.country || "",
+
+        tax_number:
+          data.settings.tax_number || "",
+
+        currency:
+          data.settings.currency || "",
+
+        invoice_footer:
+          data.settings.invoice_footer || "",
+      });
 
       setMessage(
-        "Password changed successfully."
+        "Business settings saved successfully."
       );
     } catch (error) {
+      console.error(error);
       setError(error.message);
     } finally {
-      setChangingPassword(false);
+      setSaving(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/";
-  };
+  // =================================================
+  // ROLE LOADING
+  // =================================================
+
+  if (roleLoading) {
+    return (
+      <div className="settings-section">
+        <p>Checking permissions...</p>
+      </div>
+    );
+  }
+
+  // =================================================
+  // STAFF ACCESS DENIED
+  // =================================================
+
+  if (!isAdmin) {
+    return (
+      <div className="settings-section">
+
+        <div className="settings-header">
+          <div>
+            <h2>
+              Business Settings
+            </h2>
+
+            <p>
+              Manage your business information
+              used throughout BizManager.
+            </p>
+          </div>
+        </div>
+
+        <div className="error-message">
+          <strong>
+            Access Restricted
+          </strong>
+
+          <p style={{ marginBottom: 0 }}>
+            Only administrators can view and
+            change business settings.
+          </p>
+        </div>
+
+      </div>
+    );
+  }
+
+  // =================================================
+  // LOADING SETTINGS
+  // =================================================
 
   if (loading) {
-    return <p>Loading settings...</p>;
+    return (
+      <div className="settings-section">
+        <p>Loading settings...</p>
+      </div>
+    );
   }
+
+  // =================================================
+  // ADMIN PAGE
+  // =================================================
 
   return (
     <div className="settings-section">
 
-      <div className="products-header">
+      {/* =================================================
+          HEADER
+      ================================================= */}
+
+      <div className="settings-header">
+
         <div>
-          <h2>Settings</h2>
+          <h2>
+            Business Settings
+          </h2>
 
           <p>
-            Manage your account and application settings.
+            Manage your business information
+            used throughout BizManager.
           </p>
         </div>
+
       </div>
+
+      {/* =================================================
+          SUCCESS
+      ================================================= */}
 
       {message && (
         <div className="success-message">
@@ -174,216 +372,324 @@ function Settings() {
         </div>
       )}
 
+      {/* =================================================
+          ERROR
+      ================================================= */}
+
       {error && (
         <div className="error-message">
           {error}
         </div>
       )}
 
-      {/* Profile */}
-      <div className="settings-card">
+      {/* =================================================
+          SETTINGS FORM
+      ================================================= */}
 
-        <div className="settings-card-header">
-          <div>
-            <h3>👤 Profile Information</h3>
+      <form
+        className="settings-form"
+        onSubmit={handleSave}
+      >
 
-            <p>
-              Update your account information.
-            </p>
+        {/* =================================================
+            BUSINESS INFORMATION
+        ================================================= */}
+
+        <div className="settings-card">
+
+          <div className="settings-card-header">
+
+            <div>
+              <h3>
+                Business Information
+              </h3>
+
+              <p>
+                This information will appear
+                on your invoices.
+              </p>
+            </div>
+
           </div>
+
+          <div className="settings-grid">
+
+            {/* BUSINESS NAME */}
+
+            <div className="settings-field">
+
+              <label>
+                Business Name
+              </label>
+
+              <input
+                type="text"
+                name="business_name"
+                value={
+                  settings.business_name
+                }
+                onChange={handleChange}
+                placeholder="BizManager"
+                required
+              />
+
+            </div>
+
+            {/* SUBTITLE */}
+
+            <div className="settings-field">
+
+              <label>
+                Business Subtitle
+              </label>
+
+              <input
+                type="text"
+                name="business_subtitle"
+                value={
+                  settings.business_subtitle
+                }
+                onChange={handleChange}
+                placeholder="Business Management Suite"
+              />
+
+            </div>
+
+            {/* PHONE */}
+
+            <div className="settings-field">
+
+              <label>
+                Phone
+              </label>
+
+              <input
+                type="text"
+                name="phone"
+                value={
+                  settings.phone
+                }
+                onChange={handleChange}
+                placeholder="+254 700 000 000"
+              />
+
+            </div>
+
+            {/* EMAIL */}
+
+            <div className="settings-field">
+
+              <label>
+                Email
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                value={
+                  settings.email
+                }
+                onChange={handleChange}
+                placeholder="business@example.com"
+              />
+
+            </div>
+
+            {/* ADDRESS */}
+
+            <div className="settings-field">
+
+              <label>
+                Address
+              </label>
+
+              <input
+                type="text"
+                name="address"
+                value={
+                  settings.address
+                }
+                onChange={handleChange}
+                placeholder="Your business address"
+              />
+
+            </div>
+
+            {/* CITY */}
+
+            <div className="settings-field">
+
+              <label>
+                City
+              </label>
+
+              <input
+                type="text"
+                name="city"
+                value={
+                  settings.city
+                }
+                onChange={handleChange}
+                placeholder="Nakuru"
+              />
+
+            </div>
+
+            {/* COUNTRY */}
+
+            <div className="settings-field">
+
+              <label>
+                Country
+              </label>
+
+              <input
+                type="text"
+                name="country"
+                value={
+                  settings.country
+                }
+                onChange={handleChange}
+                placeholder="Kenya"
+              />
+
+            </div>
+
+            {/* TAX NUMBER */}
+
+            <div className="settings-field">
+
+              <label>
+                Tax / VAT Number
+              </label>
+
+              <input
+                type="text"
+                name="tax_number"
+                value={
+                  settings.tax_number
+                }
+                onChange={handleChange}
+                placeholder="Optional"
+              />
+
+            </div>
+
+          </div>
+
         </div>
 
-        <form
-          className="settings-form"
-          onSubmit={handleProfileUpdate}
-        >
-          <label>Name</label>
+        {/* =================================================
+            INVOICE SETTINGS
+        ================================================= */}
 
-          <input
-            type="text"
-            value={name}
-            onChange={(e) =>
-              setName(e.target.value)
-            }
-            required
-          />
+        <div className="settings-card">
 
-          <label>Email</label>
+          <div className="settings-card-header">
 
-          <input
-            type="email"
-            value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
-            required
-          />
+            <div>
 
-          <div className="account-info">
-            <p>
-              <strong>Role:</strong>{" "}
-              {user?.role || "User"}
-            </p>
+              <h3>
+                Invoice Settings
+              </h3>
 
-            <p>
-              <strong>Account ID:</strong>{" "}
-              #{user?.id}
-            </p>
+              <p>
+                Customize how your invoices
+                display financial information.
+              </p>
+
+            </div>
+
           </div>
+
+          <div className="settings-grid">
+
+            {/* CURRENCY */}
+
+            <div className="settings-field">
+
+              <label>
+                Currency
+              </label>
+
+              <select
+                name="currency"
+                value={
+                  settings.currency
+                }
+                onChange={handleChange}
+              >
+
+                <option value="KSh">
+                  KSh — Kenyan Shilling
+                </option>
+
+                <option value="$">
+                  $ — US Dollar
+                </option>
+
+                <option value="€">
+                  € — Euro
+                </option>
+
+                <option value="£">
+                  £ — British Pound
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+          {/* FOOTER */}
+
+          <div className="settings-field full-width">
+
+            <label>
+              Invoice Footer
+            </label>
+
+            <textarea
+              name="invoice_footer"
+              value={
+                settings.invoice_footer
+              }
+              onChange={handleChange}
+              placeholder="Thank you for your business!"
+              rows="4"
+            />
+
+            <small>
+              This message appears at the
+              bottom of printed invoices.
+            </small>
+
+          </div>
+
+        </div>
+
+        {/* =================================================
+            SAVE BUTTON
+        ================================================= */}
+
+        <div className="settings-actions">
 
           <button
             type="submit"
-            disabled={savingProfile}
+            className="save-settings-btn"
+            disabled={saving}
           >
-            {savingProfile
+
+            {saving
               ? "Saving..."
-              : "Save Profile"}
+              : "Save Business Settings"}
+
           </button>
-        </form>
 
-      </div>
-
-      {/* Password */}
-      <div className="settings-card">
-
-        <div className="settings-card-header">
-          <div>
-            <h3>🔐 Change Password</h3>
-
-            <p>
-              Keep your account secure by updating
-              your password.
-            </p>
-          </div>
         </div>
 
-        <form
-          className="settings-form"
-          onSubmit={handlePasswordChange}
-        >
-          <label>Current Password</label>
-
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) =>
-              setCurrentPassword(e.target.value)
-            }
-            required
-          />
-
-          <label>New Password</label>
-
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) =>
-              setNewPassword(e.target.value)
-            }
-            minLength="6"
-            required
-          />
-
-          <label>Confirm New Password</label>
-
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) =>
-              setConfirmPassword(e.target.value)
-            }
-            minLength="6"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={changingPassword}
-          >
-            {changingPassword
-              ? "Changing..."
-              : "Change Password"}
-          </button>
-        </form>
-
-      </div>
-
-      {/* Business */}
-      <div className="settings-card">
-
-        <div className="settings-card-header">
-          <div>
-            <h3>🏢 Business Information</h3>
-
-            <p>
-              Business details will be configured
-              in a future update.
-            </p>
-          </div>
-        </div>
-
-        <div className="coming-soon">
-          <span>🚀</span>
-
-          <div>
-            <h4>Business Profile</h4>
-
-            <p>
-              Business name, phone, location,
-              logo and other business information
-              will be added here.
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Application */}
-      <div className="settings-card">
-
-        <div className="settings-card-header">
-          <div>
-            <h3>⚙️ Application</h3>
-
-            <p>
-              Application preferences.
-            </p>
-          </div>
-        </div>
-
-        <div className="settings-option">
-          <div>
-            <strong>Application Version</strong>
-
-            <p>
-              BizManager v1.0
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Logout */}
-      <div className="settings-card danger-card">
-
-        <div className="settings-card-header">
-          <div>
-            <h3>🚪 Logout</h3>
-
-            <p>
-              Sign out of your BizManager account.
-            </p>
-          </div>
-        </div>
-
-        <button
-          className="logout-btn"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-
-      </div>
+      </form>
 
     </div>
   );

@@ -30,10 +30,12 @@ function Products() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch products");
+        throw new Error(
+          data.message || "Failed to fetch products"
+        );
       }
 
-      setProducts(data.products);
+      setProducts(data.products || []);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -67,7 +69,9 @@ function Products() {
         ? `http://localhost:5000/api/products/${editingProduct.id}`
         : "http://localhost:5000/api/products";
 
-      const method = editingProduct ? "PUT" : "POST";
+      const method = editingProduct
+        ? "PUT"
+        : "POST";
 
       const response = await fetch(url, {
         method,
@@ -88,12 +92,18 @@ function Products() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            `Failed to ${editingProduct ? "update" : "create"} product`
+            `Failed to ${
+              editingProduct
+                ? "update"
+                : "create"
+            } product`
         );
       }
 
       resetForm();
-      fetchProducts();
+
+      await fetchProducts();
+
     } catch (error) {
       setError(error.message);
     } finally {
@@ -105,9 +115,13 @@ function Products() {
     setEditingProduct(product);
 
     setName(product.name);
-    setDescription(product.description || "");
+    setDescription(
+      product.description || ""
+    );
     setPrice(product.price);
-    setStockQuantity(product.stock_quantity);
+    setStockQuantity(
+      product.stock_quantity
+    );
 
     setShowForm(true);
   };
@@ -120,6 +134,8 @@ function Products() {
     if (!confirmed) {
       return;
     }
+
+    setError("");
 
     try {
       const token = localStorage.getItem("token");
@@ -138,11 +154,19 @@ function Products() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to delete product"
+          data.message ||
+            "Failed to delete product"
         );
       }
 
-      fetchProducts();
+      // Remove from the UI immediately
+      setProducts((currentProducts) =>
+        currentProducts.filter(
+          (product) =>
+            product.id !== id
+        )
+      );
+
     } catch (error) {
       setError(error.message);
     }
@@ -154,10 +178,15 @@ function Products() {
 
   return (
     <div className="products-section">
+
       <div className="products-header">
+
         <div>
           <h2>Products</h2>
-          <p>Manage your business products.</p>
+
+          <p>
+            Manage your business products.
+          </p>
         </div>
 
         <button
@@ -170,8 +199,11 @@ function Products() {
             }
           }}
         >
-          {showForm ? "Cancel" : "+ Add Product"}
+          {showForm
+            ? "Cancel"
+            : "+ Add Product"}
         </button>
+
       </div>
 
       {error && (
@@ -185,102 +217,155 @@ function Products() {
           className="product-form"
           onSubmit={handleSubmit}
         >
+
           <h3>
             {editingProduct
               ? "Edit Product"
               : "Add New Product"}
           </h3>
 
-          <label>Product Name</label>
+          <label>
+            Product Name
+          </label>
 
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-
-          <label>Description</label>
-
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <label>Price</label>
-
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-          />
-
-          <label>Stock Quantity</label>
-
-          <input
-            type="number"
-            value={stockQuantity}
             onChange={(e) =>
-              setStockQuantity(e.target.value)
+              setName(e.target.value)
             }
             required
           />
 
-          <button type="submit" disabled={saving}>
+          <label>
+            Description
+          </label>
+
+          <textarea
+            value={description}
+            onChange={(e) =>
+              setDescription(
+                e.target.value
+              )
+            }
+          />
+
+          <label>
+            Price
+          </label>
+
+          <input
+            type="number"
+            min="0"
+            value={price}
+            onChange={(e) =>
+              setPrice(e.target.value)
+            }
+            required
+          />
+
+          <label>
+            Stock Quantity
+          </label>
+
+          <input
+            type="number"
+            min="0"
+            value={stockQuantity}
+            onChange={(e) =>
+              setStockQuantity(
+                e.target.value
+              )
+            }
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={saving}
+          >
             {saving
               ? "Saving..."
               : editingProduct
               ? "Update Product"
               : "Save Product"}
           </button>
+
         </form>
       )}
 
       {products.length === 0 ? (
         <div className="empty-products">
-          <h3>No products yet</h3>
-          <p>Add your first product to get started.</p>
+
+          <h3>
+            No products yet
+          </h3>
+
+          <p>
+            Add your first product to
+            get started.
+          </p>
+
         </div>
       ) : (
         <div className="products-grid">
+
           {products.map((product) => (
             <div
               className="product-card"
               key={product.id}
             >
-              <h3>{product.name}</h3>
 
-              <p>{product.description}</p>
+              <h3>
+                {product.name}
+              </h3>
+
+              <p>
+                {product.description}
+              </p>
 
               <strong>
                 KSh{" "}
-                {Number(product.price).toLocaleString()}
+                {Number(
+                  product.price
+                ).toLocaleString()}
               </strong>
 
               <span>
-                Stock: {product.stock_quantity}
+                Stock:{" "}
+                {product.stock_quantity}
               </span>
 
               <div className="product-actions">
+
                 <button
                   className="edit-btn"
-                  onClick={() => handleEdit(product)}
+                  onClick={() =>
+                    handleEdit(product)
+                  }
                 >
                   Edit
                 </button>
 
                 <button
                   className="delete-btn"
-                  onClick={() => handleDelete(product.id)}
+                  onClick={() =>
+                    handleDelete(
+                      product.id
+                    )
+                  }
                 >
                   Delete
                 </button>
+
               </div>
+
             </div>
           ))}
+
         </div>
       )}
+
     </div>
   );
 }
