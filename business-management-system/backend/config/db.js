@@ -8,7 +8,7 @@ if (process.env.NODE_ENV !== "production") {
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  console.error("DATABASE_URL is missing ❌");
+  console.error("DATABASE_URL is missing");
 }
 
 const pool = new Pool({
@@ -26,10 +26,10 @@ async function testDatabase() {
   try {
     const result = await pool.query("SELECT NOW()");
 
-    console.log("PostgreSQL connected ✅");
+    console.log("PostgreSQL connected");
     console.log("Database time:", result.rows[0].now);
   } catch (error) {
-    console.error("Database connection failed ❌");
+    console.error("Database connection failed");
     console.error("Error message:", error.message);
     console.error("Error code:", error.code || "No error code");
     console.error("Error detail:", error.detail || "No detail");
