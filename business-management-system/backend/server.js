@@ -1,11 +1,17 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+
+// Only load local .env during local development
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
+// Import database configuration
+require("./db"); // Adjust path if your db file is in config/ (e.g., './config/db')
 
 // =================================================
 // ROUTES
 // =================================================
-
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
 const salesRoutes = require("./routes/sales");
@@ -22,75 +28,52 @@ const authMiddleware = require("./middleware/auth");
 // =================================================
 // APP
 // =================================================
-
 const app = express();
 
 // =================================================
 // MIDDLEWARE
 // =================================================
-
 app.use(cors());
 app.use(express.json());
 
 // =================================================
 // API ROUTES
 // =================================================
-
 app.use("/api/auth", authRoutes);
-
 app.use("/api/products", productRoutes);
-
 app.use("/api/sales", salesRoutes);
-
 app.use("/api/customers", customerRoutes);
-
 app.use("/api/users", usersRoutes);
-
 app.use("/api/expenses", expenseRoutes);
-
 app.use("/api/invoices", invoicesRoutes);
-
 app.use("/api/reports", reportsRoutes);
-
 app.use("/api/settings", settingsRoutes);
-
 app.use("/api/audit-logs", auditLogsRoutes);
 
 // =================================================
 // TEST ROUTE
 // =================================================
-
 app.get("/", (req, res) => {
   res.json({
-    message:
-      "Business Management System API is running 🚀",
+    message: "Business Management System API is running 🚀",
   });
 });
 
 // =================================================
 // PROTECTED PROFILE ROUTE
 // =================================================
-
-app.get(
-  "/api/profile",
-  authMiddleware,
-  (req, res) => {
-    res.json({
-      message:
-        "You accessed a protected route ✅",
-      user: req.user,
-    });
-  }
-);
+app.get("/api/profile", authMiddleware, (req, res) => {
+  res.json({
+    message: "You accessed a protected route ✅",
+    user: req.user,
+  });
+});
 
 // =================================================
 // SERVER
 // =================================================
-
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-  console.log(
-    `Server running on port ${PORT}`
-  );
+  console.log(`Server running on port ${PORT}`);
 });
