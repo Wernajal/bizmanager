@@ -1,4 +1,3 @@
-```js
 const { Pool } = require("pg");
 
 // Only load local .env during local development
@@ -41,4 +40,3 @@ async function testDatabase() {
 testDatabase();
 
 module.exports = pool;
-```
