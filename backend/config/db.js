@@ -1,22 +1,39 @@
 const { Pool } = require("pg");
-require("dotenv").config();
+
+// Only load local .env during local development
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  console.error("DATABASE_URL is missing");
+}
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD
+  connectionString: databaseUrl,
+
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
+
+  connectionTimeoutMillis: 10000,
 });
 
 async function testDatabase() {
   try {
     const result = await pool.query("SELECT NOW()");
-    console.log("PostgreSQL connected ✅");
+
+    console.log("PostgreSQL connected");
     console.log("Database time:", result.rows[0].now);
   } catch (error) {
-    console.error("Database connection failed ❌");
-    console.error(error.message);
+    console.error("Database connection failed");
+    console.error("Error message:", error.message);
+    console.error("Error code:", error.code || "No error code");
+    console.error("Error detail:", error.detail || "No detail");
+    console.error("Error hint:", error.hint || "No hint");
   }
 }
 
