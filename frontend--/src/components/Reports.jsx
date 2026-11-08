@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function Reports() {
@@ -43,27 +44,27 @@ function Reports() {
           customersResponse,
         ] = await Promise.all([
           fetch(
-            "http://localhost:5000/api/reports/summary",
+            apiBaseUrl + "/api/reports/summary",
             { headers }
           ),
 
           fetch(
-            "http://localhost:5000/api/reports/expenses-by-category",
+            apiBaseUrl + "/api/reports/expenses-by-category",
             { headers }
           ),
 
           fetch(
-            "http://localhost:5000/api/sales",
+            apiBaseUrl + "/api/sales",
             { headers }
           ),
 
           fetch(
-            "http://localhost:5000/api/products",
+            apiBaseUrl + "/api/products",
             { headers }
           ),
 
           fetch(
-            "http://localhost:5000/api/customers",
+            apiBaseUrl + "/api/customers",
             { headers }
           ),
         ]);

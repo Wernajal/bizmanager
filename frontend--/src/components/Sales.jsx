@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function Sales() {
@@ -53,7 +54,7 @@ function Sales() {
   const fetchSales = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/sales",
+        apiBaseUrl + "/api/sales",
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -83,7 +84,7 @@ function Sales() {
   const fetchProducts = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/products",
+        apiBaseUrl + "/api/products",
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -113,7 +114,7 @@ function Sales() {
   const fetchCustomers = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/customers",
+        apiBaseUrl + "/api/customers",
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -343,7 +344,7 @@ function Sales() {
       // ---------------------------------------------
 
       const response = await fetch(
-        "http://localhost:5000/api/sales",
+        apiBaseUrl + "/api/sales",
         {
           method: "POST",
 
@@ -432,7 +433,7 @@ function Sales() {
       // =================================================
 
       const settingsResponse = await fetch(
-        "http://localhost:5000/api/settings",
+        apiBaseUrl + "/api/settings",
         {
           headers: {
             Authorization:
@@ -522,7 +523,7 @@ function Sales() {
       // =================================================
 
       const createResponse = await fetch(
-        `http://localhost:5000/api/invoices/sale/${saleId}`,
+        `${apiBaseUrl}/api/invoices/sale/${saleId}`,
         {
           method: "POST",
 
@@ -555,7 +556,7 @@ function Sales() {
 
       const invoiceResponse =
         await fetch(
-          `http://localhost:5000/api/invoices/sale/${saleId}`,
+          `${apiBaseUrl}/api/invoices/sale/${saleId}`,
           {
             headers: {
               Authorization:

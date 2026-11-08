@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 import Customers from "./Customers";
@@ -40,7 +41,7 @@ function Dashboard({ user, onLogout }) {
         // =================================================
 
         const productsResponse = await fetch(
-          "http://localhost:5000/api/products",
+          apiBaseUrl + "/api/products",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -70,7 +71,7 @@ function Dashboard({ user, onLogout }) {
         // =================================================
 
         const salesResponse = await fetch(
-          "http://localhost:5000/api/sales",
+          apiBaseUrl + "/api/sales",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -113,7 +114,7 @@ function Dashboard({ user, onLogout }) {
 
         const customersResponse =
           await fetch(
-            "http://localhost:5000/api/customers",
+            apiBaseUrl + "/api/customers",
             {
               headers: {
                 Authorization: `Bearer ${token}`,

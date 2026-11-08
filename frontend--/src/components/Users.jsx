@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function Users() {
@@ -47,7 +48,7 @@ function Users() {
       const token = getToken();
 
       const response = await fetch(
-        "http://localhost:5000/api/users",
+        apiBaseUrl + "/api/users",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -195,7 +196,7 @@ function Users() {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/users",
+          apiBaseUrl + "/api/users",
           {
             method: "POST",
 
@@ -235,7 +236,7 @@ function Users() {
 
       else {
         const response = await fetch(
-          `http://localhost:5000/api/users/${editingUserId}`,
+          `${apiBaseUrl}/api/users/${editingUserId}`,
           {
             method: "PUT",
 
@@ -312,7 +313,7 @@ function Users() {
       const token = getToken();
 
       const response = await fetch(
-        `http://localhost:5000/api/users/${user.id}`,
+        `${apiBaseUrl}/api/users/${user.id}`,
         {
           method: "DELETE",
 

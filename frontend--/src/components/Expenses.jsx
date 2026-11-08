@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function Expenses() {
@@ -21,7 +22,7 @@ function Expenses() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:5000/api/expenses",
+        apiBaseUrl + "/api/expenses",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -69,8 +70,8 @@ function Expenses() {
       const token = localStorage.getItem("token");
 
       const url = editingExpense
-        ? `http://localhost:5000/api/expenses/${editingExpense.id}`
-        : "http://localhost:5000/api/expenses";
+        ? `${apiBaseUrl}/api/expenses/${editingExpense.id}`
+        : apiBaseUrl + "/api/expenses";
 
       const method = editingExpense ? "PUT" : "POST";
 
@@ -138,7 +139,7 @@ function Expenses() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/api/expenses/${id}`,
+        `${apiBaseUrl}/api/expenses/${id}`,
         {
           method: "DELETE",
           headers: {

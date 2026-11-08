@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function ActivityLog() {
@@ -36,7 +37,7 @@ function ActivityLog() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/audit-logs",
+        apiBaseUrl + "/api/audit-logs",
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,

@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function Products() {
@@ -19,7 +20,7 @@ function Products() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:5000/api/products",
+        apiBaseUrl + "/api/products",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -66,8 +67,8 @@ function Products() {
       const token = localStorage.getItem("token");
 
       const url = editingProduct
-        ? `http://localhost:5000/api/products/${editingProduct.id}`
-        : "http://localhost:5000/api/products";
+        ? `${apiBaseUrl}/api/products/${editingProduct.id}`
+        : apiBaseUrl + "/api/products";
 
       const method = editingProduct
         ? "PUT"
@@ -141,7 +142,7 @@ function Products() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/api/products/${id}`,
+        `${apiBaseUrl}/api/products/${id}`,
         {
           method: "DELETE",
           headers: {

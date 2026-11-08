@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 function Settings() {
@@ -102,7 +103,7 @@ function Settings() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/settings",
+        apiBaseUrl + "/api/settings",
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -208,7 +209,7 @@ function Settings() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/settings",
+        apiBaseUrl + "/api/settings",
         {
           method: "PUT",
 
